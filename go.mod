@@ -1,4 +1,4 @@
-module xecho
+module github.com/XebulaIO/xecho
 
 go 1.19
 
