@@ -15,7 +15,16 @@ func New(e *echo.Echo) *XEcho {
 	}
 }
 
-func (xe *XEcho) WithAuthorize(authorize echo.MiddlewareFunc) *XEcho {
-	xe.a = xe.Group("/", authorize)
+func (xe *XEcho) WithAuthorize(authorize MiddlewareFunc) *XEcho {
+	xe.a = xe.Group("/", func(next echo.HandlerFunc) echo.HandlerFunc {
+		r := authorize(func(xc XContext) error {
+			return next(xc)
+		})
+
+		return func(c echo.Context) error {
+			return r(*Context(c))
+		}
+	})
+
 	return xe
 }

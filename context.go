@@ -8,27 +8,23 @@ var (
 	sessionKey = "session-key"
 )
 
-type xContext[T any] struct {
+type XContext struct {
 	echo.Context
 }
 
-func Context[T any](c echo.Context) *xContext[T] {
-	return &xContext[T]{c}
+func Context(c echo.Context) *XContext {
+	return &XContext{c}
 }
 
-func ContextWithSession[T any](c echo.Context, s *T) *xContext[T] {
-	return &xContext[T]{c}
-}
-
-func (c *xContext[T]) Session() *T {
+func (c *XContext) Session() Session {
 	s := c.Get(sessionKey)
 	if s == nil {
 		return nil
 	}
 
-	return s.(*T)
+	return s.(Session)
 }
 
-func (c *xContext[T]) SetSession(s *T) {
+func (c *XContext) SetSession(s Session) {
 	c.Set(sessionKey, s)
 }
