@@ -22,7 +22,7 @@ func (xe *XEcho) WithAuthorize(authorize MiddlewareFunc) *XEcho {
 		})
 
 		return func(c echo.Context) error {
-			return r(*Context(c))
+			return r(*Context(xe, c))
 		}
 	})
 
