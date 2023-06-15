@@ -3,6 +3,7 @@ package xecho
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -92,6 +93,7 @@ func (xr *xRoute) Authenticated() *xRoute {
 		return xr
 	}
 
+	xr.Path = strings.TrimPrefix(xr.Path, "/")
 	xr.Route = xr.xe.a.Add(xr.Method, xr.Path, xr.h, xr.m...)
 	return xr
 }
