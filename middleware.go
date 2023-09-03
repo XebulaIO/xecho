@@ -95,7 +95,7 @@ func JWTCasbinAuthorizationMiddlewareWithConfig(config JWTCasbinAuthorizationMid
 			)
 
 			claims := jwt.MapClaims{}
-			_, err := jwt.ParseWithClaims(s.Token(), claims, config.KeyFunc)
+			_, err := jwt.ParseWithClaims(s.AccessToken(), claims, config.KeyFunc)
 			if err != nil {
 				return err
 			}
