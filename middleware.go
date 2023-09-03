@@ -10,6 +10,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	ErrTokenNotFound = fmt.Errorf("token not found")
+)
+
 type HandlerFunc func(c XContext) error
 type MiddlewareFunc func(next HandlerFunc) HandlerFunc
 type ValidateTokenFunc func(string) (Session, error)
@@ -30,28 +34,33 @@ func BearerAuthenticationMiddleWareWithConfig(config BearerAuthenticationMiddleW
 		config.ValidateToken = func(s string) (Session, error) { return nil, nil }
 	}
 
-	getToken := func(c echo.Context) string {
+	getToken := func(c echo.Context) (string, error) {
 		authToken := c.Request().Header.Get(echo.HeaderAuthorization)
 		if authToken == "" {
 			cookie, err := c.Cookie(config.CookieName)
 			if err != nil {
-				return ""
+				return "", err
 			}
 
-			return cookie.Value
+			return cookie.Value, nil
 		}
 
 		splitToken := strings.Split(authToken, "Bearer ")
 		if len(splitToken) > 1 {
-			return splitToken[1]
+			return splitToken[1], nil
 		}
 
-		return ""
+		return "", ErrTokenNotFound
 	}
 
 	return func(next HandlerFunc) HandlerFunc {
 		return func(c XContext) error {
-			token := getToken(c)
+			token, err := getToken(c)
+			if err != nil {
+				c.NoContent(http.StatusUnauthorized)
+				return err
+			}
+
 			if token == "" {
 				c.NoContent(http.StatusUnauthorized)
 				return fmt.Errorf("token nil")
