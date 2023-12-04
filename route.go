@@ -98,7 +98,7 @@ func (xr *xRoute) Authenticated() *xRoute {
 	return xr
 }
 
-func (xr *xRoute) WithScopes(scope ...string) *xRoute {
+func (xr *xRoute) WithScopes(scope ...Stringer) *xRoute {
 	if xr.xe.a == nil {
 		log.Printf("Route %s cannot have scopes since the authorization middleware is nil. Consider using WithAuthorize function for XEcho.", xr.Path)
 		return xr
@@ -107,7 +107,7 @@ func (xr *xRoute) WithScopes(scope ...string) *xRoute {
 	xr.m = append(xr.m, func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			xc := Context(xr.xe, c)
-			ok := scopeCheck(xc, scope)
+			ok := scopeCheck(xc, scope...)
 			if !ok {
 				return xc.XError(
 					NewError(*xc).WithResponseCode(http.StatusUnauthorized).
@@ -124,7 +124,7 @@ func (xr *xRoute) WithScopes(scope ...string) *xRoute {
 	return xr
 }
 
-func scopeCheck(c *XContext, epScope []string) bool {
+func scopeCheck(c *XContext, epScope ...Stringer) bool {
 	var (
 		tokenScope, ok = c.Scope()
 		tokenScopeMap  = make(map[string]any)
@@ -138,12 +138,18 @@ func scopeCheck(c *XContext, epScope []string) bool {
 		return false
 	}
 
+	// If the token has a wildcard scope, then it has access to all scopes.
+	// This is useful for authenticated users.
+	if tokenScope[0] == "*" {
+		return true
+	}
+
 	for _, s := range tokenScope {
 		tokenScopeMap[s] = struct{}{}
 	}
 
 	for _, s := range epScope {
-		if _, ok := tokenScopeMap[s]; !ok {
+		if _, ok := tokenScopeMap[s.String()]; !ok {
 			return false
 		}
 	}

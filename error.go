@@ -7,10 +7,10 @@ import (
 )
 
 type Error struct {
-	Code         string `json:"code"`
-	Detail       string `json:"detail"`
-	TrackID      string `json:"track_id"`
-	Timestamp    int64  `json:"timestamp"`
+	Code         string `json:"code,omitempty"`
+	Detail       string `json:"detail,omitempty"`
+	TrackID      string `json:"track_id,omitempty"`
+	Timestamp    int64  `json:"timestamp,omitempty"`
 	responseCode int
 }
 
