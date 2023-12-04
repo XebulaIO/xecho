@@ -7,6 +7,7 @@ import (
 
 var (
 	sessionKey = "session-key"
+	scopeKey   = "scope"
 )
 
 type XContext struct {
@@ -44,4 +45,18 @@ func (c *XContext) XError(err *Error) error {
 
 func (c *XContext) XEcho() *XEcho {
 	return c.e
+}
+
+func (c *XContext) SetScope(scope []string) {
+	c.Set(scopeKey, scope)
+}
+
+func (c *XContext) Scope() ([]string, bool) {
+	scope := c.Get(scopeKey)
+	if scope == nil {
+		return nil, false
+	}
+
+	s, ok := scope.([]string)
+	return s, ok
 }

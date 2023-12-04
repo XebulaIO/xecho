@@ -97,3 +97,52 @@ func (xr *xRoute) Authenticated() *xRoute {
 	xr.Route = xr.xe.a.Add(xr.Method, xr.Path, xr.h, xr.m...)
 	return xr
 }
+
+func (xr *xRoute) WithScopes(scope ...string) *xRoute {
+	if xr.xe.a == nil {
+		log.Printf("Route %s cannot have scopes since the authorization middleware is nil. Consider using WithAuthorize function for XEcho.", xr.Path)
+		return xr
+	}
+
+	xr.m = append(xr.m, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			xc := Context(xr.xe, c)
+			ok := scopeCheck(xc, scope)
+			if !ok {
+				return xc.XError(
+					NewError(*xc).WithResponseCode(http.StatusUnauthorized).
+						WithCode("no_permission"),
+				)
+			}
+
+			return next(c)
+		}
+	})
+
+	xr.Path = strings.TrimPrefix(xr.Path, "/")
+	xr.Route = xr.xe.a.Add(xr.Method, xr.Path, xr.h, xr.m...)
+	return xr
+}
+
+func scopeCheck(c *XContext, epScope []string) bool {
+	var (
+		tokenScope, ok = c.Scope()
+		tokenScopeMap  = make(map[string]any)
+	)
+
+	if !ok {
+		return false
+	}
+
+	for _, s := range tokenScope {
+		tokenScopeMap[s] = struct{}{}
+	}
+
+	for _, s := range epScope {
+		if _, ok := tokenScopeMap[s]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
