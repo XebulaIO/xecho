@@ -130,6 +130,10 @@ func scopeCheck(c *XContext, epScope []string) bool {
 		tokenScopeMap  = make(map[string]any)
 	)
 
+	if len(epScope) == 0 {
+		return false
+	}
+
 	if !ok {
 		return false
 	}
