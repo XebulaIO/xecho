@@ -10,9 +10,10 @@ import (
 
 type xRoute struct {
 	*echo.Route
-	xe *XEcho
-	h  echo.HandlerFunc
-	m  []echo.MiddlewareFunc
+	xe   *XEcho
+	h    echo.HandlerFunc
+	m    []echo.MiddlewareFunc
+	scmi int
 }
 
 func (xe *XEcho) CONNECT(path string, h HandlerFunc, m ...echo.MiddlewareFunc) *xRoute {
@@ -93,9 +94,7 @@ func (xr *xRoute) Authenticated() *xRoute {
 		return xr
 	}
 
-	xr.Path = strings.TrimPrefix(xr.Path, "/")
-	xr.Route = xr.xe.a.Add(xr.Method, xr.Path, xr.h, xr.m...)
-	return xr
+	return xr.WithScopes()
 }
 
 func (xr *xRoute) WithScopes(scope ...Stringer) *xRoute {
@@ -104,6 +103,13 @@ func (xr *xRoute) WithScopes(scope ...Stringer) *xRoute {
 		return xr
 	}
 
+	// remove scope check middleware if exists
+	if xr.scmi > 0 {
+		_m := xr.m[:xr.scmi-1]
+		xr.m = append(_m, xr.m[xr.scmi:]...)
+	}
+
+	// add scope check middleware
 	xr.m = append(xr.m, func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			xc := Context(xr.xe, c)
@@ -118,6 +124,9 @@ func (xr *xRoute) WithScopes(scope ...Stringer) *xRoute {
 			return next(c)
 		}
 	})
+
+	// scope check middleware index
+	xr.scmi = len(xr.m)
 
 	xr.Path = strings.TrimPrefix(xr.Path, "/")
 	xr.Route = xr.xe.a.Add(xr.Method, xr.Path, xr.h, xr.m...)
