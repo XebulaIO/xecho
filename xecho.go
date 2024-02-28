@@ -10,6 +10,10 @@ type XEcho struct {
 }
 
 func New(e *echo.Echo) *XEcho {
+	if e.IPExtractor == nil {
+		e.IPExtractor = extractIP()
+	}
+
 	return &XEcho{
 		Echo: e,
 	}
